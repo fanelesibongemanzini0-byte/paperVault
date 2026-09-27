@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniFriend - Paper Vault</title>
+    <style>
+        :root {
+            --primary-color: #002D62;
+            --accent-color: #FFD700;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 { color: var(--primary-color); font-size: 24px; margin: 0; }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+
+        .search-filter-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+            box-sizing: border-box;
+        }
+
+        .filter-actions { margin-top: 15px; }
+        .filter-actions button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .filter-actions a {
+            margin-left: 10px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .vault-table {
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border-collapse: collapse;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .vault-table th, .vault-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .vault-table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .vault-table tr:hover { background-color: #f9f9f9; }
+
+        .badge {
+            background-color: #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .action-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .action-links a:hover { text-decoration: underline; }
+
+        .empty-row td { text-align: center; color: #888; padding: 30px; }
+
+        .messages { list-style: none; padding: 0; margin: 0 0 15px; }
+        .messages li {
+            background: #e6ffed;
+            border: 1px solid #34c759;
+            padding: 10px 14px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>📚 UniFriend Paper Vault</h1>
+        <div>
+            {% if request.user.is_staff %}
+            <a class="btn-primary" href="{% url 'paper_vault_review' %}" style="background:#666; margin-right:8px;">Review Queue</a>
+            {% endif %}
+            <a class="btn-primary" href="{% url 'paper_vault_submit' %}">+ Submit Missing Paper</a>
+        </div>
+    </header>
+
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="get" class="search-filter-card">
+        <input type="text" name="q" class="search-bar" value="{{ selected.q }}"
+               placeholder="Search by Module Code (e.g., 4CPS312), Module Name, or Keyword...">
+
+        <div class="filter-grid">
+            <select name="faculty" class="filter-select">
+                <option value="">All Faculties / Departments</option>
+                {% for value, label in faculty_choices %}
+                <option value="{{ value }}" {% if selected.faculty == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="year" class="filter-select">
+                <option value="">Academic Year</option>
+                {% for y in available_years %}
+                <option value="{{ y }}" {% if selected.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="semester" class="filter-select">
+                <option value="">Semester</option>
+                {% for value, label in semester_choices %}
+                <option value="{{ value }}" {% if selected.semester == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="paper_type" class="filter-select">
+                <option value="">Type of Paper</option>
+                {% for value, label in paper_type_choices %}
+                <option value="{{ value }}" {% if selected.paper_type == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit">Search</button>
+            <a href="{% url 'paper_vault_index' %}">Clear filters</a>
+        </div>
+    </form>
+
+    <table class="vault-table">
+        <thead>
+            <tr>
+                <th>Module Code</th>
+                <th>Title / Assessment</th>
+                <th>Year</th>
+                <th>Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for paper in papers %}
+            <tr>
+                <td><strong>{{ paper.module_code }}</strong></td>
+                <td>{{ paper.title }}</td>
+                <td>{{ paper.year }}</td>
+                <td><span class="badge">{{ paper.get_paper_type_display }}</span></td>
+                <td class="action-links">
+                    <a href="{{ paper.file.url }}" target="_blank">View PDF</a>
+                    <a href="{{ paper.file.url }}" download>Download</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="5">No papers found. Try adjusting your search or filters, or submit one yourself.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

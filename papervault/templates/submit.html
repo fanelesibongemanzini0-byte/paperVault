@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit a Past Paper</title>
+    <style>
+        :root { --primary-color: #002D62; --bg-color: #f4f6f9; --card-bg: #ffffff; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { color: var(--primary-color); font-size: 22px; }
+        .card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-weight: 600; margin-bottom: 6px; }
+        .field input, .field select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .errorlist { color: #c0392b; font-size: 13px; margin: 4px 0 0; padding: 0; list-style: none; }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .back-link { display: inline-block; margin-bottom: 14px; color: var(--primary-color); text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a class="back-link" href="{% url 'paper_vault_index' %}">&larr; Back to vault</a>
+    <h1>Submit a Missing Paper</h1>
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn-primary">Submit Paper</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
